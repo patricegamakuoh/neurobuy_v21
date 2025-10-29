@@ -1,0 +1,16 @@
+QUICK FIX FOR REJECTION REASON ERROR:
+
+1. Stop your dev server (Ctrl+C)
+
+2. Delete the .next folder:
+   rm -rf .next   (Mac/Linux)
+   OR
+   rmdir /s /q .next   (Windows)
+
+3. Run: npx prisma generate
+
+4. Restart server: npm run dev
+
+5. Try rejecting a store again - it should work!
+
+The error happens because Prisma client wasn't regenerated to include the rejectionReason field.

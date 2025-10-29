@@ -1,0 +1,13 @@
+column_name,data_type,is_nullable
+id,uuid,NO
+vendor_id,uuid,YES
+name,text,NO
+description,text,YES
+price,bigint,NO
+currency,text,NO
+category,text,YES
+image_url,text,YES
+stock,integer,YES
+status,text,NO
+created_at,timestamp with time zone,YES
+mrp,bigint,YES

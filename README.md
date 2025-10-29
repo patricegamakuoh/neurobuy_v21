@@ -1,60 +1,86 @@
-## NeuroBuy — Multivendor E‑Commerce & Logistics (Cameroon ↔ China)
+<div align="center">
+  <h1>NeuroBuy</h1>
+  <p>
+    A multivendor e-commerce platform for Cameroon-China trade, built with Next.js and Tailwind CSS.
+  </p>
+  <p>
+    <a href="https://github.com/GreatStackDev/goCart/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/GreatStackDev/goCart?style=for-the-badge" alt="License"></a>
+    <a href="https://github.com/GreatStackDev/goCart/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge" alt="PRs Welcome"></a>
+    <a href="https://github.com/GreatStackDev/goCart/issues"><img src="https://img.shields.io/github/issues/GreatStackDev/goCart?style=for-the-badge" alt="GitHub issues"></a>
+  </p>
+</div>
 
-NeuroBuy is a multivendor e‑commerce platform built on Next.js + Supabase + Vercel. It enables product browsing, carts, checkout (orders), vendor storefronts, and logistics tracking, aligned with the project SRS and timing plan.
+---
 
-### Tech Stack
-- Frontend: Next.js (App Router), React, TailwindCSS
-- Backend/DB: Supabase (PostgreSQL, Auth, Storage, Realtime)
-- Hosting: Vercel (frontend + API routes)
+## 📖 Table of Contents
 
-### Environment Variables
-Create `.env.local`:
+- [✨ Features](#-features)
+- [🛠️ Tech Stack](#-tech-stack)
+- [🚀 Getting Started](#-getting-started)
+- [🤝 Contributing](#-contributing)
+- [📜 License](#-license)
 
-```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_or_anon_key
-```
+---
 
-The code accepts either `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+## Features
 
-### Local Development
-```
+- **Multi-Vendor E-commerce:** Connect Cameroonian vendors with Chinese suppliers and local customers
+- **Order Tracking:** Real-time shipment tracking from China to Cameroon
+- **Customer Dashboard:** Manage orders, track shipments, and view purchase history
+- **Vendor Management:** Vendors can create stores, manage products, and process orders
+- **Logistics Integration:** Built-in support for cargo and logistics providers
+- **Admin Panel:** Platform administrators manage users, vendors, and system settings
+
+## 🛠️ Tech Stack <a name="-tech-stack"></a>
+
+- **Framework:** Next.js
+- **Styling:** Tailwind CSS
+- **UI Components:** Lucide React for icons
+- **State Management:** Redux Toolkit
+
+## 🚀 Getting Started <a name="-getting-started"></a>
+
+First, install the dependencies. We recommend using `npm` for this project.
+
+```bash
 npm install
+```
+
+Then, run the development server:
+
+```bash
 npm run dev
-```
-Dev server runs at http://localhost:3000 (or the next free port). If another process uses 3000, Next.js will choose 3001/3002.
-
-### Supabase Schema & Seeding
-- Apply `DOC/supabase_schema.sql` in Supabase SQL editor (tables: stores, products, orders, order_items, logistics, shipments, payments; RLS placeholders enabled).
-- Seed products locally:
-
-```
-curl -X POST http://localhost:3001/api/seed
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### Implemented (Phases 3–5)
-- Product Catalog & Details: `/products`, `/products/[id]`
-- Cart (localStorage): `/cart` (add/update/remove)
-- Checkout API: `POST /api/orders` (creates `orders` + `order_items`; requires signed‑in user)
-- Vendor Storefront: `/vendors/[vendorId]`
-- Order Tracking: `/tracking/[orderId]`
-- Dashboards:
-  - Customer: `/dashboard/customer` (recent orders)
-  - Vendor: `/dashboard/vendor` (vendor products)
-  - Logistics: `/dashboard/logistics` (update shipment status via `PATCH /api/shipments`)
-  - Admin: `/dashboard/admin` (skeleton)
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### How to Test (Phases 3–5)
-1) Ensure `.env.local` is set and dev server is running.
-2) Apply schema and seed products.
-3) Browse `/products` → open a product → Add to cart → `/cart`.
-4) Sign in via the starter auth pages (`/auth/login` or `/auth/sign-up`).
-5) Checkout on `/cart` to create an order; copy the `orderId` from the alert.
-6) Tracking: `/tracking/[orderId]`. Update status from `/dashboard/logistics`.
-7) Vendor storefront: assign a product’s `vendor_id` to your user id in Supabase, then open `/vendors/[vendorId]` or `/dashboard/vendor` when signed in.
+You can start editing the page by modifying `app/(public)/page.js`. The page auto-updates as you edit the file.
 
-### Deployment (Vercel)
-- Set env vars in Vercel Project → Settings → Environment Variables for Production/Preview:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- Configure Supabase Auth Redirect URLs to include your domains (local + Vercel).
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Outfit](https://vercel.com/font), a new font family for Vercel.
+
+---
+
+## 🤝 Contributing <a name="-contributing"></a>
+
+We welcome contributions! Please see our [CONTRIBUTING.md](./CONTRIBUTING.md) for more details on how to get started.
+
+---
+
+## 📜 License <a name="-license"></a>
+
+This project is licensed under the MIT License. See the [LICENSE.md](./LICENSE.md) file for details.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!

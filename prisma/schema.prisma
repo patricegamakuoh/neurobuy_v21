@@ -1,0 +1,284 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Extend Supabase auth.users table
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String?
+  email     String?  @unique
+  image     String?
+  cart      Json?    @default("{}")
+  role      String   @default("CUSTOMER")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations to custom tables
+  ratings           Rating[]
+  addresses         Address[]
+  stores            Store[]            @relation("StoreVendor")
+  buyerOrders       Order[]            @relation("BuyerOrder")
+  logisticsProvider LogisticsProvider? @relation("LogisticsProvider")
+
+  @@map("users")
+}
+
+enum UserRole {
+  CUSTOMER
+  VENDOR
+  LOGISTICS
+  ADMIN
+}
+
+// Store table matching Supabase schema
+model Store {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId        String   @map("vendor_id") @db.Uuid
+  storeName       String   @map("store_name")
+  description     String?
+  username        String?  @unique
+  email           String?
+  contact         String?
+  address         String?
+  imageUrl        String?  @map("image_url")
+  status          String   @default("pending")
+  rejectionReason String?  @map("rejection_reason")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  vendor User    @relation("StoreVendor", fields: [vendorId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@map("stores")
+}
+
+// Product table matching Supabase schema
+model Product {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId    String?  @map("vendor_id") @db.Uuid
+  name        String
+  description String?
+  price       BigInt
+  mrp         BigInt? // Maximum Retail Price
+  currency    String   @default("XAF")
+  category    String?
+  imageUrl    String?  @map("image_url")
+  stock       Int?
+  status      String   @default("active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  orderItems OrderItem[]
+  ratings    Rating[]
+
+  @@map("products")
+}
+
+enum OrderStatus {
+  ORDER_PLACED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+}
+
+enum PaymentMethod {
+  COD
+  STRIPE
+}
+
+// Order table matching Supabase schema
+model Order {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  storeId    String?  @map("store_id") @db.Uuid
+  status     String   @default("pending")
+  totalPrice BigInt   @map("total_price")
+  currency   String   @default("XAF")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user       User        @relation("BuyerOrder", fields: [userId], references: [id], onDelete: Cascade)
+  store      Store?      @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  orderItems OrderItem[]
+  payments   Payment[]
+  shipments  Shipment[]
+
+  @@map("orders")
+}
+
+// OrderItem table matching Supabase schema
+model OrderItem {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId   String @map("order_id") @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  name      String
+  quantity  Int
+  unitPrice BigInt @map("unit_price")
+  currency  String @default("XAF")
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+}
+
+// Required for creating a Rating: rating, review, userId, productId
+model Rating {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rating    Int
+  review    String
+  userId    String   @map("user_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  orderId   String   @map("order_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId, orderId])
+  @@map("ratings")
+}
+
+// Required for creating an Address: userId, name, email, street, city, state, zip, country, phone
+model Address {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String
+  email     String
+  street    String
+  city      String
+  state     String
+  zip       String
+  country   String
+  phone     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("addresses")
+}
+
+// Required for creating a Coupon: code, description, discount, forNewUser, isPublic, expiresAt
+model Coupon {
+  code        String   @id
+  description String
+  discount    Float
+  forNewUser  Boolean
+  forMember   Boolean  @default(false)
+  isPublic    Boolean
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+}
+
+// Logistics provider table
+model LogisticsProvider {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId      String   @map("provider_id") @db.Uuid // User ID with LOGISTICS role
+  companyName     String   @map("company_name")
+  contactName     String?  @map("contact_name")
+  email           String?
+  phone           String?
+  regions         Json // Array of service regions
+  pricing         Json? // Pricing information
+  status          String   @default("pending") // pending, approved, rejected
+  rejectionReason String?  @map("rejection_reason")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  provider User @relation("LogisticsProvider", fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId])
+  @@map("logistics_providers")
+}
+
+// Legacy Logistics table (for backward compatibility)
+model Logistics {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyName String   @map("company_name")
+  contact     String?
+  region      String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  shipments Shipment[]
+
+  @@map("logistics")
+}
+
+// Shipment tracking table for China to Cameroon
+model Shipment {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId           String    @map("order_id") @db.Uuid
+  logisticsId       String?   @map("logistics_id") @db.Uuid
+  trackingNumber    String?   @unique @map("tracking_number")
+  currentStatus     String    @default("pending_pickup") @map("current_status")
+  pickupLocation    String?   @map("pickup_location") // China location
+  deliveryAddress   String?   @map("delivery_address") // Cameroon address
+  estimatedDelivery DateTime? @map("estimated_delivery")
+  actualDelivery    DateTime? @map("actual_delivery")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  order     Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  logistics Logistics?         @relation(fields: [logisticsId], references: [id], onDelete: SetNull)
+  tracking  ShipmentTracking[]
+
+  @@map("shipments")
+}
+
+// Shipment tracking events for detailed progress
+model ShipmentTracking {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shipmentId  String   @map("shipment_id") @db.Uuid
+  status      String // pending_pickup, picked_up, in_transit_china, at_port_china, in_transit_cameroon, arrived_cameroon, out_for_delivery, delivered
+  location    String?
+  description String?
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@map("shipment_tracking")
+}
+
+// Delivery request from seller to logistics provider
+model DeliveryRequest {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId      String    @map("order_id") @db.Uuid
+  sellerId     String    @map("seller_id") @db.Uuid
+  providerId   String?   @map("provider_id") @db.Uuid // Selected logistics provider
+  pickupDate   DateTime? @map("pickup_date")
+  deliveryDate DateTime? @map("delivery_date")
+  quotation    Json? // Pricing quotation details
+  status       String    @default("pending") // pending, quoted, accepted, rejected
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("delivery_requests")
+}
+
+// Payment table matching Supabase schema
+model Payment {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId       String   @map("order_id") @db.Uuid
+  paymentMethod String   @map("payment_method")
+  paymentStatus String   @default("pending") @map("payment_status")
+  timestamp     DateTime @default(now())
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
